@@ -1,0 +1,10 @@
+{
+    "rules":{
+        "get /v1/info": {
+            "extra_feilds": {
+                "id": "respget:id",
+                "type": "echo:课程"
+            }
+        }
+    }
+}
