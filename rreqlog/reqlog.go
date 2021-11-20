@@ -37,7 +37,7 @@ func ReqLog(confpath string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		st := time.Now()
 		c.Next()
-		rt := time.Now().UnixMilli() - st.UnixMilli()
+		rt := time.Now().UnixNano() - st.UnixNano()
 		go func() {
 			reqlog.ParseLog(c, int(rt))
 		}()
@@ -112,7 +112,7 @@ func (r *reqlog) ParseLog(c *gin.Context, rt int) {
 		"method":         c.Request.Method,
 		"url":            c.Request.RequestURI,
 		"record_time":    time.Now(),
-		"run_time":       rt,
+		"run_time":       rt / 10e6,
 		"request_header": c.Request.Header,
 	}
 	// 自定义字段解析
