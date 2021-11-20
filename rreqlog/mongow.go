@@ -21,6 +21,9 @@ func WeekStime(t time.Time) time.Time {
 	return time.Unix((t.Unix())/604800*604800+316800, 0)
 }
 
+// 接口实现检测
+var _ Recorder = &MongoRecord{}
+
 type MongoRecord struct {
 	dsn          string
 	db, collName string
