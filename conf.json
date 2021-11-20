@@ -3,7 +3,7 @@
         "choose": "mongo",
         "mongo": {
             "dsn": "mongodb://root:example@192.168.1.7:27017/?authSource=admin",
-            "db": "reqlog",
+            "db": "rrlog",
             "collection": "demo",
             "part": "week"
         },
@@ -14,7 +14,6 @@
     "rules":{
         "get /v1/info": {
             "extra_feilds": {
-                "id": "respget:id",
                 "type": "echo:课程"
             }
         }

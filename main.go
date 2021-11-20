@@ -1,10 +1,15 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"gin-reqlog-md/rreqlog"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 	r := gin.Default()
-	r.Use()
+	r.Use(rreqlog.ReqLog("./conf.json"))
 	routerHandler(r)
 	r.Run(":8090")
 }
@@ -12,6 +17,7 @@ func main() {
 func routerHandler(r *gin.Engine) {
 	v1 := r.Group("/v1")
 	v1.GET("/info", func(c *gin.Context) {
+		time.Sleep(time.Millisecond * 20)
 		c.JSON(200, gin.H{
 			"code": 1,
 			"msg":  "操作成功",
@@ -21,6 +27,7 @@ func routerHandler(r *gin.Engine) {
 		})
 	})
 	v1.POST("/info", func(c *gin.Context) {
+		time.Sleep(time.Millisecond * 20)
 		c.JSON(200, gin.H{
 			"code": 1,
 			"msg":  "操作成功",
