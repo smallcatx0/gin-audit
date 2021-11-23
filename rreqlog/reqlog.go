@@ -28,8 +28,8 @@ func ReqLog(confpath string) gin.HandlerFunc {
 		collName := mongoConf.Get("collection").String()
 		dr = NewMongoWtDef(dsn, db, collName)
 	case "file":
-		// fileConf := confParse.Get("recorder.file")
-
+		fileConf := confParse.Get("recorder.file")
+		dr = NewFileRecord(fileConf.Get("path").String())
 	default:
 		log.Fatal("[gin-reqlog-md] no such recoder")
 	}
