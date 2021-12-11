@@ -29,7 +29,3 @@ func TestFilenamer(t *testing.T) {
 		filenameR(parsetime("2008-09-15 08:15:09"), "/home/rlog/"),
 	)
 }
-
-func TestFileW() {
-
-}
