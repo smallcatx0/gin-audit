@@ -1,4 +1,4 @@
-package rreqlog
+package gaudit
 
 import (
 	"encoding/json"

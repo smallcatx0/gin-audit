@@ -1,4 +1,4 @@
-module gin-reqlog-md
+module gaudit
 
 go 1.15
 

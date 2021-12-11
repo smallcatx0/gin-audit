@@ -1,12 +1,11 @@
-package rreqlog_test
+package gaudit
 
 import (
-	"gin-reqlog-md/rreqlog"
 	"testing"
 )
 
 func TestMongoRecoder(t *testing.T) {
-	r := rreqlog.NewMongoWtDef(
+	r := NewMongoWtDef(
 		"mongodb://root:example@localhost:27017/?authSource=admin",
 		"reqLog", "demo",
 	)

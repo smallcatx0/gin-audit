@@ -1,4 +1,4 @@
-package rreqlog
+package gaudit
 
 import (
 	"io/ioutil"
@@ -31,7 +31,7 @@ func ReqLog(confpath string) gin.HandlerFunc {
 		fileConf := confParse.Get("recorder.file")
 		dr = NewFileRecord(fileConf.Get("path").String())
 	default:
-		log.Fatal("[gin-reqlog-md] no such recoder")
+		log.Fatal("[gin-audit-md] no such recoder")
 	}
 	reqlog := NewReqLog(dr, confParse.Get("rules"))
 	return func(c *gin.Context) {

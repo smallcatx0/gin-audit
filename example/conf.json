@@ -1,8 +1,8 @@
 {
     "recorder":{
-        "choose": "file",
+        "choose": "mongo",
         "mongo": {
-            "dsn": "mongodb://root:example@192.168.1.7:27017/?authSource=admin",
+            "dsn": "mongodb://root:example@mongo.serv:27017/?authSource=admin",
             "db": "rrlog",
             "collection": "demo",
             "part": "week"

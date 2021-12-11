@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gin-reqlog-md/rreqlog"
+	"gaudit"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,7 +9,7 @@ import (
 
 func main() {
 	r := gin.Default()
-	r.Use(rreqlog.ReqLog("./conf.json"))
+	r.Use(gaudit.ReqLog("./conf.json"))
 	routerHandler(r)
 	r.Run(":8090")
 }
