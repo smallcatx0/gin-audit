@@ -29,3 +29,13 @@ func TestFilenamer(t *testing.T) {
 		filenameR(parsetime("2008-09-15 08:15:09"), "/home/rlog/"),
 	)
 }
+
+func TestFilew(t *testing.T) {
+	r := NewFileRecord("/tmp/reqlog/")
+	content := map[string]interface{}{
+		"name": "李磊1",
+		"age":  11,
+	}
+	r.Record(content)
+	r.Record(content)
+}
