@@ -2,6 +2,7 @@ package main
 
 import (
 	"gaudit"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,14 @@ import (
 
 func main() {
 	r := gin.Default()
+	// 添加些自定义的字段获取逻辑
+	gaudit.AddFieldHandle("userphone", func(c *gin.Context, s ...string) string {
+		token := c.GetHeader("token")
+		log.Print(token)
+		// ... token 换用户据信息
+		return "110"
+	})
+
 	r.Use(gaudit.ReqLog("./conf.json"))
 	routerHandler(r)
 	r.Run(":8090")

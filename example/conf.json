@@ -14,7 +14,8 @@
     "rules":{
         "get /v1/info": {
             "extra_feilds": {
-                "type": "echo:课程"
+                "type": "echo:课程",
+                "phone": "userphone"
             }
         }
     }
