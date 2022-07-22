@@ -18,7 +18,7 @@ func main() {
 		return "110"
 	})
 
-	r.Use(gaudit.ReqLog("./conf.json"))
+	r.Use(gaudit.ApiAudit("./conf.json"))
 	routerHandler(r)
 	r.Run(":8090")
 }

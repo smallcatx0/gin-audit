@@ -1,6 +1,7 @@
 package gaudit
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -11,10 +12,12 @@ import (
 )
 
 // gin-requestlog 中间件
-func ReqLog(confpath string) gin.HandlerFunc {
+func ApiAudit(confpath string) gin.HandlerFunc {
 	confC, err := ioutil.ReadFile(confpath)
+	h := func(c *gin.Context) {}
 	if err != nil {
-		log.Fatal("read config file faile ! err=", err.Error())
+		log.Println("read config file faile ! err=", err.Error())
+		return h
 	}
 	confParse := gjson.ParseBytes(confC)
 	channel := confParse.Get("recorder.choose").String()
@@ -34,14 +37,26 @@ func ReqLog(confpath string) gin.HandlerFunc {
 		log.Fatal("[gin-audit-md] no such recoder")
 	}
 	reqlog := NewReqLog(dr, confParse.Get("rules"))
-	return func(c *gin.Context) {
+	h = func(c *gin.Context) {
+		if !reqlog.shouldRecord(c) {
+			return
+		}
+		reqBody, _ := c.GetRawData()
+		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+		rw := ResponseWriterWrapper{
+			Body:           bytes.NewBufferString(""),
+			ResponseWriter: c.Writer,
+		}
+		c.Writer = rw
 		st := time.Now()
 		c.Next()
 		rt := time.Now().UnixNano() - st.UnixNano()
+		resBody := rw.Body.Bytes()
 		go func() {
-			reqlog.ParseLog(c, int(rt))
+			reqlog.ParseAndRecorde(rt, c, reqBody, resBody)
 		}()
 	}
+	return h
 }
 
 type extRule struct {
@@ -55,13 +70,7 @@ func (r extRule) String() string {
 	for _, param := range r.funParam {
 		s += param + ", "
 	}
-	return s + ")"
-}
-
-type reqlog struct {
-	c        *gin.Context
-	recorder Recorder
-	routers  map[string][]extRule
+	return s[:len(s)-2] + ")"
 }
 
 // parseRouteRules 解析路由规则
@@ -90,6 +99,11 @@ func parseRouteRules(routRules gjson.Result) map[string][]extRule {
 	return res
 }
 
+type reqlog struct {
+	recorder Recorder
+	routers  map[string][]extRule
+}
+
 func NewReqLog(recorder Recorder, rules gjson.Result) *reqlog {
 	// 解析规则
 	routRules := parseRouteRules(rules)
@@ -100,33 +114,72 @@ func NewReqLog(recorder Recorder, rules gjson.Result) *reqlog {
 	return l
 }
 
-func (r *reqlog) ParseLog(c *gin.Context, rt int) {
-	r.c = c
-	k := strings.ToLower(c.Request.Method) + " " + c.Request.RequestURI
+func (r *reqlog) ruleKey(c *gin.Context) string {
+	return strings.ToLower(c.Request.Method) + " " + c.Request.URL.Path
+}
+
+func (r *reqlog) shouldRecord(c *gin.Context) bool {
+	_, ok := r.routers[r.ruleKey(c)]
+	return ok
+}
+
+func (r *reqlog) ParseAndRecorde(
+	rt int64,
+	c *gin.Context,
+	req, res []byte,
+) {
+	k := r.ruleKey(c)
 	rules, ok := r.routers[k]
 	if !ok {
 		return
 	}
 	// 公共字段解析
 	logData := map[string]interface{}{
-		"method":         c.Request.Method,
-		"url":            c.Request.RequestURI,
-		"record_time":    time.Now(),
-		"run_time":       rt / 10e6,
-		"request_header": c.Request.Header,
+		"method":      c.Request.Method,
+		"url":         c.Request.URL.Path,
+		"query":       c.Request.URL.Query().Encode(),
+		"form":        c.Request.Form,
+		"record_time": time.Now(),
+		"run_time":    rt / 10e6,
+		"header":      c.Request.Header,
+		"body":        string(req),
+		"status":      c.Writer.Status(),
+		"size":        c.Writer.Size(),
+		"resp_h":      c.Writer.Header(),
+		"resp":        string(res),
 	}
 	// 自定义字段解析
-	r.addExtRules(logData, rules)
+	r.addExtRules(logData, rules, c, req, res)
 	// 存储
 	r.recorder.Record(logData)
 }
 
-func (r *reqlog) addExtRules(logData map[string]interface{}, rules []extRule) {
+func (r *reqlog) addExtRules(
+	data map[string]interface{},
+	rules []extRule,
+	c *gin.Context,
+	req, res []byte,
+) {
 	for _, arule := range rules {
 		h, ok := CustomRules[arule.funName]
 		if !ok {
 			continue
 		}
-		logData[arule.field] = h(r.c, arule.funParam...)
+		data[arule.field] = h(c, arule.funParam...)
 	}
+}
+
+type ResponseWriterWrapper struct {
+	gin.ResponseWriter
+	Body *bytes.Buffer // 缓存
+}
+
+func (w ResponseWriterWrapper) Write(b []byte) (int, error) {
+	w.Body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+func (w ResponseWriterWrapper) WriteString(s string) (int, error) {
+	w.Body.WriteString(s)
+	return w.ResponseWriter.WriteString(s)
 }
